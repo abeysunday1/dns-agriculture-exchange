@@ -1,5 +1,5 @@
 (() => {
- const db=window.supabase?.createClient('https://zwvtxybqvxtnjrhfcptt.supabase.co','sb_publishable_-UriFEnpHEPASlRYfIrZgA_6GD6diPF');
+ const db=window.supabase?.createClient(window.DNS_SUPABASE_CONFIG?.url||'https://zwvtxybqvxtnjrhfcptt.supabase.co',window.DNS_SUPABASE_CONFIG?.key||'sb_publishable_-UriFEnpHEPASlRYfIrZgA_6GD6diPF');
  const $=id=>document.getElementById(id);
  const esc=v=>String(v??'').replace(/[&<>\"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#39;'}[c]));
  const label=v=>({pending_review:'Pending review',under_review:'Under review',approved:'Approved',rejected:'Changes requested',withdrawn:'Withdrawn'})[v]||v;

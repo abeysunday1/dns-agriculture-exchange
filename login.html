@@ -22,7 +22,7 @@ label{display:block;font-size:12px;font-weight:700;color:#46564d;margin:13px 0 6
 </head>
 <body>
 <main>
-  <div class="brand">DIGITALNEWSSPACE Â· AGRICULTURE EXCHANGE</div>
+  <div class="brand">DIGITALNEWSSPACE ÃÂ· AGRICULTURE EXCHANGE</div>
   <h1 id="heading">Welcome back</h1>
   <p class="sub" id="intro">Sign in to your buyer or supplier account.</p>
   <div class="roles" aria-label="Account type">
@@ -46,15 +46,15 @@ label{display:block;font-size:12px;font-weight:700;color:#46564d;margin:13px 0 6
   </form>
   <button class="primary hidden" id="googleFinish" type="button">Continue with selected account type</button>
   <div class="message" id="message" role="status"></div>
-  <p class="note">Your contact details remain private. DNS controls buyerâsupplier introductions.</p>
+  <p class="note">Your contact details remain private. DNS controls buyerÃ¢ÂÂsupplier introductions.</p>
   <div class="footer">By continuing, you agree to the DNS Agriculture Exchange terms and privacy policy.</div>
 </main>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 /* Add the DNS Supabase project URL and public anon key here after backend setup.
    Never place a Supabase service-role key in this file. */
-const SUPABASE_URL = "https://zwvtxybqvxtnjrhfcptt.supabase.co";
-const SUPABASE_ANON_KEY = "sb_publishable_-UriFEnpHEPASlRYfIrZgA_6GD6diPF";
+const SUPABASE_URL = window.DNS_SUPABASE_CONFIG?.url || "https://zwvtxybqvxtnjrhfcptt.supabase.co";
+const SUPABASE_ANON_KEY = window.DNS_SUPABASE_CONFIG?.key || "sb_publishable_-UriFEnpHEPASlRYfIrZgA_6GD6diPF";
 const configured = SUPABASE_URL.startsWith("https://") && !SUPABASE_URL.includes("YOUR_") && !SUPABASE_ANON_KEY.includes("YOUR_");
 const client = configured && window.supabase ? window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY) : null;
 let role = "buyer", mode = "signin", recoveryMode = new URLSearchParams(location.search).get("recovery")==="1", googleSetupSession=null;

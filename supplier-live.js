@@ -1,6 +1,6 @@
 (() => {
-  const URL='https://zwvtxybqvxtnjrhfcptt.supabase.co';
-  const KEY='sb_publishable_-UriFEnpHEPASlRYfIrZgA_6GD6diPF';
+  const URL=window.DNS_SUPABASE_CONFIG?.url||'https://zwvtxybqvxtnjrhfcptt.supabase.co';
+  const KEY=window.DNS_SUPABASE_CONFIG?.key||'sb_publishable_-UriFEnpHEPASlRYfIrZgA_6GD6diPF';
   const db=window.supabase?.createClient(URL,KEY);
   const $=id=>document.getElementById(id);
   let user=null;
@@ -27,7 +27,7 @@
     if(!body)return;
     $('produceCount').textContent=rows.length+' record'+(rows.length===1?'':'s');
     $('listingCount') && ($('listingCount').textContent=rows.length);
-    const overview=$('overviewProduce');if(overview){overview.innerHTML=rows.length?rows.slice(0,3).map(r=>{const d=r.submission_data||{},p=d.produce||{},b=d.business||{};return `<div class=\"listing\"><div class=\"crop\">🌾</div><div><h3>${clean(p.Commodity||'Produce submission')}</h3><p>${clean(b['Farm / business location']||b.State||'Location not provided')}</p><span class=\"tag gold\">${clean(status(r.status))}</span></div></div>`}).join(''):'<div class=\"empty\">No produce submitted yet. Select Add produce to begin.</div>';}
+    const overview=$('overviewProduce');if(overview){overview.innerHTML=rows.length?rows.slice(0,3).map(r=>{const d=r.submission_data||{},p=d.produce||{},b=d.business||{};return `<div class=\"listing\"><div class=\"crop\">ð¾</div><div><h3>${clean(p.Commodity||'Produce submission')}</h3><p>${clean(b['Farm / business location']||b.State||'Location not provided')}</p><span class=\"tag gold\">${clean(status(r.status))}</span></div></div>`}).join(''):'<div class=\"empty\">No produce submitted yet. Select Add produce to begin.</div>';}
     if(!rows.length){body.innerHTML='<tr><td colspan="5" class="empty">No produce submitted yet. Select Add produce to begin.</td></tr>';return;}
     body.innerHTML=rows.map(r=>{
       const d=r.submission_data||{},p=d.produce||{},b=d.business||{};
@@ -58,7 +58,7 @@
   $('supplierForm')?.addEventListener('submit',async e=>{
     e.preventDefault();
     if(!user){alert('Your session has expired. Please sign in again.');location.href='login.html';return;}
-    const button=$('submitBtn');button.disabled=true;button.textContent='Submitting…';
+    const button=$('submitBtn');button.disabled=true;button.textContent='Submittingâ¦';
     try{
       const submission=collect();
       if(!submission.consent?.consent)throw new Error('Please confirm the consent checkbox before submitting.');
