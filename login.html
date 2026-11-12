@@ -22,7 +22,7 @@ label{display:block;font-size:12px;font-weight:700;color:#46564d;margin:13px 0 6
 </head>
 <body>
 <main>
-  <div class="brand">DIGITALNEWSSPACE · AGRICULTURE EXCHANGE</div>
+  <div class="brand">DIGITALNEWSSPACE Â· AGRICULTURE EXCHANGE</div>
   <h1 id="heading">Welcome back</h1>
   <p class="sub" id="intro">Sign in to your buyer or supplier account.</p>
   <div class="roles" aria-label="Account type">
@@ -33,6 +33,8 @@ label{display:block;font-size:12px;font-weight:700;color:#46564d;margin:13px 0 6
     <button class="tab active" type="button" data-mode="signin">Log in</button>
     <button class="tab" type="button" data-mode="signup">Create account</button>
   </div>
+  <button class="google" id="google" type="button"><span class="gmark">G</span><span>Continue with Google</span></button>
+  <div class="or">OR CONTINUE WITH EMAIL</div>
   <form id="authForm">
     <div id="nameWrap" class="hidden"><label for="fullName">Full name</label><input id="fullName" autocomplete="name" placeholder="Your full name"></div>
     <label for="email">Gmail or email address</label>
@@ -42,10 +44,9 @@ label{display:block;font-size:12px;font-weight:700;color:#46564d;margin:13px 0 6
     <a class="forgot" href="#" id="forgot">Forgot password?</a>
     <button class="primary" id="submit" type="submit">Log in</button>
   </form>
-  <div class="or">OR</div>
-  <button class="google" id="google" type="button"><span class="gmark">G</span><span>Continue with Google</span></button>
+  <button class="primary hidden" id="googleFinish" type="button">Continue with selected account type</button>
   <div class="message" id="message" role="status"></div>
-  <p class="note">Your contact details remain private. DNS controls buyer–supplier introductions.</p>
+  <p class="note">Your contact details remain private. DNS controls buyerâsupplier introductions.</p>
   <div class="footer">By continuing, you agree to the DNS Agriculture Exchange terms and privacy policy.</div>
 </main>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -56,18 +57,52 @@ const SUPABASE_URL = "https://zwvtxybqvxtnjrhfcptt.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_-UriFEnpHEPASlRYfIrZgA_6GD6diPF";
 const configured = SUPABASE_URL.startsWith("https://") && !SUPABASE_URL.includes("YOUR_") && !SUPABASE_ANON_KEY.includes("YOUR_");
 const client = configured && window.supabase ? window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY) : null;
-let role = "buyer", mode = "signin", recoveryMode = new URLSearchParams(location.search).get("recovery")==="1";
+let role = "buyer", mode = "signin", recoveryMode = new URLSearchParams(location.search).get("recovery")==="1", googleSetupSession=null;
 const $ = id => document.getElementById(id);
 function say(text,error=false){$("message").textContent=text;$("message").classList.toggle("error",error);$("message").style.display="block"}
+async function routeAuthenticatedSession(session){
+ if(!session?.user||!client)return;
+ const {data:profile,error}=await client.from("exchange_profiles").select("account_type,account_status").eq("user_id",session.user.id).maybeSingle();
+ if(profile){window.location.href=profile.account_type==="supplier"?"index.html":"buyer.html";return;}
+ const provider=session.user.app_metadata?.provider;
+ const savedRole=session.user.user_metadata?.account_type;
+ if(provider==="google"&&["buyer","supplier"].includes(savedRole)){
+  const {error:bootstrapError}=await client.rpc("ensure_exchange_profile_from_metadata");
+  if(!bootstrapError){const {data:created}=await client.from("exchange_profiles").select("account_type").eq("user_id",session.user.id).maybeSingle();if(created){window.location.href=created.account_type==="supplier"?"index.html":"buyer.html";return;}}
+ }
+ if(provider==="google"){
+  googleSetupSession=session;
+  $("googleFinish").classList.remove("hidden");
+  $("intro").textContent="Choose Buyer or Farmer / Supplier above to finish setting up your Google account.";
+  say("Your Google account is signed in. Choose your exchange account type, then continue.");
+  return;
+ }
+ await client.auth.signOut({scope:"local"});
+ say(error?.message||"This account has no exchange profile. Contact DNS support.",true);
+}
+async function finishGoogleSetup(){
+ if(!googleSetupSession)return;
+ const user=googleSetupSession.user;
+ const metadata={...(user.user_metadata||{}),account_type:role,full_name:user.user_metadata?.full_name||user.user_metadata?.name||""};
+ const {error:updateError}=await client.auth.updateUser({data:metadata});
+ if(updateError){say(updateError.message,true);return;}
+ const {error:rpcError}=await client.rpc("ensure_exchange_profile_from_metadata");
+ if(rpcError){say(rpcError.message,true);return;}
+ const {data:profile,error:profileError}=await client.from("exchange_profiles").select("account_type").eq("user_id",user.id).maybeSingle();
+ if(profileError||!profile){say("Your profile could not be completed. Please contact DNS support.",true);return;}
+ window.location.href=profile.account_type==="supplier"?"index.html":"buyer.html";
+}
 function setMode(next){mode=next;document.querySelectorAll("[data-mode]").forEach(b=>b.classList.toggle("active",b.dataset.mode===mode));$("nameWrap").classList.toggle("hidden",mode!=="signup");$("fullName").required=mode==="signup";$("forgot").classList.toggle("hidden",mode!=="signin");$("heading").textContent=mode==="signin"?"Welcome back":"Create your account";$("intro").textContent=mode==="signin"?"Sign in to your buyer or supplier account.":"Register securely to access the exchange."; $("submit").textContent=mode==="signin"?"Log in":"Create account";$("password").autocomplete=mode==="signin"?"current-password":"new-password";$("message").style.display="none"}
 document.querySelectorAll("[data-mode]").forEach(b=>b.addEventListener("click",()=>setMode(b.dataset.mode)));
-document.querySelectorAll("[data-role]").forEach(b=>b.addEventListener("click",()=>{role=b.dataset.role;document.querySelectorAll("[data-role]").forEach(x=>x.classList.toggle("active",x===b));$("intro").textContent=(mode==="signin"?"Sign in to your ":"Create your ")+(role==="buyer"?"buyer":"supplier")+" account."}));
+document.querySelectorAll("[data-role]").forEach(b=>b.addEventListener("click",()=>{role=b.dataset.role;document.querySelectorAll("[data-role]").forEach(x=>x.classList.toggle("active",x===b));if(googleSetupSession){$("googleFinish").classList.remove("hidden");say("Continue as "+(role==="buyer"?"Buyer":"Farmer / Supplier")+" to finish your Google account.");}else{$("intro").textContent=(mode==="signin"?"Sign in to your ":"Create your ")+(role==="buyer"?"buyer":"supplier")+" account."}}));
 if(recoveryMode){setMode("signin");$("heading").textContent="Choose a new password";$("intro").textContent="Enter and save your new password.";$("password").autocomplete="new-password";$("submit").textContent="Update password";$("forgot").classList.add("hidden")}
-client?.auth.onAuthStateChange(async(event)=>{if(event==="PASSWORD_RECOVERY"){recoveryMode=true;$("heading").textContent="Choose a new password";$("intro").textContent="Enter and save your new password.";$("submit").textContent="Update password";$("forgot").classList.add("hidden")}});
+client?.auth.onAuthStateChange((event)=>{if(event==="PASSWORD_RECOVERY"){recoveryMode=true;$("heading").textContent="Choose a new password";$("intro").textContent="Enter and save your new password.";$("submit").textContent="Update password";$("forgot").classList.add("hidden")}});
+if(client){client.auth.getSession().then(({data})=>{if(data.session&&!recoveryMode)routeAuthenticatedSession(data.session)});}
 $("authForm").addEventListener("submit",async e=>{e.preventDefault();if(!client){say("Preview only: connect this page to your Supabase project to activate secure email sign-up and login.",true);return}
 const email=$("email").value.trim(),password=$("password").value,button=$("submit");button.disabled=true;
-try{let result;if(recoveryMode){result=await client.auth.updateUser({password});if(!result.error){say("Password updated. You can now sign in.");recoveryMode=false;history.replaceState({},"",location.pathname);setMode("signin");$("password").value=""}}else if(mode==="signup"){result=await client.auth.signUp({email,password,options:{emailRedirectTo:window.location.origin+window.location.pathname,data:{full_name:$("fullName").value.trim(),account_type:role}}});if(!result.error)say("Account request received. Check your email to confirm your address.")}else{result=await client.auth.signInWithPassword({email,password});if(!result.error){const {data:profile,error:profileError}=await client.from("exchange_profiles").select("account_type").eq("user_id",result.data.user.id).maybeSingle();if(profileError||!profile){await client.auth.signOut();say("This account is not active for exchange access. Contact DNS support if you believe this is an error.",true)}else{window.location.href=(profile.account_type==="supplier"?"index.html":"buyer.html")}}}if(result.error)say(result.error.message,true)}catch(err){say("Unable to complete sign-in. Please try again.",true)}finally{button.disabled=false}});
-$("google").addEventListener("click",()=>say("Google sign-in is not enabled yet. Use email and password so DNS can save the correct buyer or supplier account type.",true));
+try{let result;if(recoveryMode){result=await client.auth.updateUser({password});if(!result.error){say("Password updated. You can now sign in.");recoveryMode=false;history.replaceState({},"",location.pathname);setMode("signin");$("password").value=""}}else if(mode==="signup"){result=await client.auth.signUp({email,password,options:{emailRedirectTo:window.location.origin+window.location.pathname,data:{full_name:$("fullName").value.trim(),account_type:role}}});if(!result.error)say("Account request received. Check your email to confirm your address.")}else{result=await client.auth.signInWithPassword({email,password});if(!result.error){await routeAuthenticatedSession(result.data.session)}}if(result.error)say(result.error.message,true)}catch(err){say("Unable to complete sign-in. Please try again.",true)}finally{button.disabled=false}});
+$("google").addEventListener("click",async()=>{if(!client)return say("Supabase Auth is unavailable.",true);$("google").disabled=true;const {error}=await client.auth.signInWithOAuth({provider:"google",options:{redirectTo:window.location.origin+window.location.pathname+"?oauth=1",queryParams:{prompt:"select_account"}}});$("google").disabled=false;if(error)say(error.message,true)});
+$("googleFinish").addEventListener("click",finishGoogleSetup);
 $("forgot").addEventListener("click",async e=>{e.preventDefault();const email=$("email").value.trim();if(!email)return say("Enter your email address first.",true);if(!client)return say("Preview only: connect Supabase Auth to enable password recovery.",true);const {error}=await client.auth.resetPasswordForEmail(email,{redirectTo:window.location.origin+window.location.pathname+"?recovery=1"});say(error?error.message:"If this email is registered, a password reset link will be sent.",!!error)});
 </script>
 </body>
