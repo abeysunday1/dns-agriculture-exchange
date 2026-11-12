@@ -52,8 +52,8 @@ label{display:block;font-size:12px;font-weight:700;color:#46564d;margin:13px 0 6
 <script>
 /* Add the DNS Supabase project URL and public anon key here after backend setup.
    Never place a Supabase service-role key in this file. */
-const SUPABASE_URL = "YOUR_SUPABASE_PROJECT_URL";
-const SUPABASE_ANON_KEY = "YOUR_SUPABASE_ANON_KEY";
+const SUPABASE_URL = "https://zwvtxybqvxtnjrhfcptt.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_-UriFEnpHEPASlRYfIrZgA_6GD6diPF";
 const configured = SUPABASE_URL.startsWith("https://") && !SUPABASE_URL.includes("YOUR_") && !SUPABASE_ANON_KEY.includes("YOUR_");
 const client = configured && window.supabase ? window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY) : null;
 let role = "buyer", mode = "signin";
@@ -64,7 +64,7 @@ document.querySelectorAll("[data-mode]").forEach(b=>b.addEventListener("click",(
 document.querySelectorAll("[data-role]").forEach(b=>b.addEventListener("click",()=>{role=b.dataset.role;document.querySelectorAll("[data-role]").forEach(x=>x.classList.toggle("active",x===b));$("intro").textContent=(mode==="signin"?"Sign in to your ":"Create your ")+(role==="buyer"?"buyer":"farmer / supplier")+" account."}));
 $("authForm").addEventListener("submit",async e=>{e.preventDefault();if(!client){say("Preview only: connect this page to your Supabase project to activate secure email sign-up and login.",true);return}
 const email=$("email").value.trim(),password=$("password").value,button=$("submit");button.disabled=true;
-try{let result;if(mode==="signup"){result=await client.auth.signUp({email,password,options:{data:{full_name:$("fullName").value.trim(),account_role:role}}});if(!result.error)say("Account request received. Check your email to confirm your address.")}else{result=await client.auth.signInWithPassword({email,password});if(!result.error)say("Signed in. Your secure session is active.")}if(result.error)say(result.error.message,true)}catch(err){say("Unable to complete sign-in. Please try again.",true)}finally{button.disabled=false}});
+try{let result;if(mode==="signup"){result=await client.auth.signUp({email,password,options:{emailRedirectTo:window.location.origin+window.location.pathname,data:{full_name:$("fullName").value.trim(),account_role:role}}});if(!result.error)say("Account request received. Check your email to confirm your address.")}else{result=await client.auth.signInWithPassword({email,password});if(!result.error)say("Signed in. Your secure session is active.")}if(result.error)say(result.error.message,true)}catch(err){say("Unable to complete sign-in. Please try again.",true)}finally{button.disabled=false}});
 $("google").addEventListener("click",async()=>{if(!client){say("Google sign-in is not available in this preview yet. DNS will enable it after secure Google authentication is configured.",true);return}const {error}=await client.auth.signInWithOAuth({provider:"google",options:{redirectTo:window.location.origin+window.location.pathname,queryParams:{prompt:"select_account"}}});if(error)say(error.message,true)});
 $("forgot").addEventListener("click",async e=>{e.preventDefault();const email=$("email").value.trim();if(!email)return say("Enter your email address first.",true);if(!client)return say("Preview only: connect Supabase Auth to enable password recovery.",true);const {error}=await client.auth.resetPasswordForEmail(email,{redirectTo:window.location.origin+window.location.pathname});say(error?error.message:"If this email is registered, a password reset link will be sent.",!!error)});
 </script>
