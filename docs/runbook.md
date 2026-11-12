@@ -1,10 +1,10 @@
-# DNS Agriculture Exchange â Operations Runbook
+# DNS Agriculture Exchange Ã¢ÂÂ Operations Runbook
 
 ## Current release state
 
 - Active repair branch: `fix/owner-registration-auth`.
 - Production `main`: unchanged; live site has not been deployed or modified.
-- Production Supabase: `zwvtxybqvxtnjrhfcptt` â read-only during this repair.
+- Production Supabase: `zwvtxybqvxtnjrhfcptt` Ã¢ÂÂ read-only during this repair.
 - Free staging: `lvpgasxdmzpsjprohcji` (`https://lvpgasxdmzpsjprohcji.supabase.co`), created at **$0/month**.
 - No paid tools, paid branches, upgrades, or Firecrawl credits were used. No PR is open.
 
@@ -97,12 +97,12 @@ This execution environment could not resolve the public GitHub Pages hostname, s
 
 Existing project: `Adisa's Project`.
 
-- **DNS Agriculture â Exchange Submission Sync** â enabled. Authenticated webhook trigger; one Supabase upsert into `exchange_automation_events`, keyed by `submission_id`. It records receipt only; it does not send approval/rejection email.
-- **Untitled** â enabled Supabase trigger for the unrelated CRM `activities` table.
-- **DNS Agriculture â Buyer Form Intake** â disabled legacy Tables-based intake flow.
-- **DNS Agriculture â Supplier Form Intake** â disabled legacy Tables-based intake flow.
-- **DNS Agri â Consent-Gated Email Welcome** â disabled Tables-triggered flow.
-- **Adisa Lead Discovery â Firecrawl to CRM (6-hour interim)** â disabled; do not enable or use Firecrawl.
+- **DNS Agriculture Ã¢ÂÂ Exchange Submission Sync** Ã¢ÂÂ enabled. Authenticated webhook trigger; one Supabase upsert into `exchange_automation_events`, keyed by `submission_id`. It records receipt only; it does not send approval/rejection email.
+- **Untitled** Ã¢ÂÂ enabled Supabase trigger for the unrelated CRM `activities` table.
+- **DNS Agriculture Ã¢ÂÂ Buyer Form Intake** Ã¢ÂÂ disabled legacy Tables-based intake flow.
+- **DNS Agriculture Ã¢ÂÂ Supplier Form Intake** Ã¢ÂÂ disabled legacy Tables-based intake flow.
+- **DNS Agri Ã¢ÂÂ Consent-Gated Email Welcome** Ã¢ÂÂ disabled Tables-triggered flow.
+- **Adisa Lead Discovery Ã¢ÂÂ Firecrawl to CRM (6-hour interim)** Ã¢ÂÂ disabled; do not enable or use Firecrawl.
 
 Do not switch the existing submission-sync flow's production Supabase connection to staging. Approval/rejection notifications require a staging-safe event route and an isolated Gmail test; this is not yet verified. SLA target: first admin review within 24 hours of submission. Calendar integration is optional and not configured.
 
@@ -116,7 +116,7 @@ Do not switch the existing submission-sync flow's production Supabase connection
 
 ## Known free-tier blocker
 
-Supabase rejected enabling leaked-password protection because HaveIBeenPwned checks are available on Pro plans and up. Do not upgrade or pay. The staging Security Advisor is clean after the RPC hardening migration, but this separate Auth control remains disabled and blocks the stated release gate.
+Supabase rejected enabling leaked-password protection because HaveIBeenPwned checks are available on Pro plans and up. Do not upgrade or pay. The staging Security Advisor is clean after the RPC hardening migration. Staging grants anon SELECT on `exchange_submissions` while an explicit deny policy and RLS block visibility; the role-simulation query returned zero visible rows, but the table currently has no test submissions. This separate Auth control remains disabled and blocks the stated release gate.
 
 ## Release gate
 
