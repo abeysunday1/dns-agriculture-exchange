@@ -27,6 +27,7 @@
     if(!body)return;
     $('produceCount').textContent=rows.length+' record'+(rows.length===1?'':'s');
     $('listingCount') && ($('listingCount').textContent=rows.length);
+    const overview=$('overviewProduce');if(overview){overview.innerHTML=rows.length?rows.slice(0,3).map(r=>{const d=r.submission_data||{},p=d.produce||{},b=d.business||{};return `<div class=\"listing\"><div class=\"crop\">🌾</div><div><h3>${clean(p.Commodity||'Produce submission')}</h3><p>${clean(b['Farm / business location']||b.State||'Location not provided')}</p><span class=\"tag gold\">${clean(status(r.status))}</span></div></div>`}).join(''):'<div class=\"empty\">No produce submitted yet. Select Add produce to begin.</div>';}
     if(!rows.length){body.innerHTML='<tr><td colspan="5" class="empty">No produce submitted yet. Select Add produce to begin.</td></tr>';return;}
     body.innerHTML=rows.map(r=>{
       const d=r.submission_data||{},p=d.produce||{},b=d.business||{};
