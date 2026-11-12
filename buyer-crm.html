@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#102d23"><title>DNS Agriculture | Buyer Acquisition CRM</title>
+<style>
+:root{--ink:#172b23;--muted:#718078;--green:#164b35;--cream:#f5f7f1;--line:#e1e8e1;--white:#fff;--red:#a13e32;--blue:#2457a7}
+*{box-sizing:border-box}body{margin:0;background:var(--cream);color:var(--ink);font:14px/1.5 Inter,system-ui,Arial,sans-serif}
+header{background:#102d23;color:#fff;padding:18px 24px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+header strong{letter-spacing:.04em}header small{color:#c4d5ca}main{max-width:1240px;margin:24px auto;padding:0 16px}
+.panel{background:#fff;border:1px solid var(--line);border-radius:14px;padding:20px;margin-bottom:16px}
+.muted{color:var(--muted)}.eyebrow{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+h1{font-size:24px;margin:0 0 5px}h2{font-size:17px;margin:0 0 12px}
+.notice{padding:12px 14px;border-radius:9px;background:#fff7df;color:#75591b;margin-bottom:14px}
+.grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}.stat{background:#f8faf7;border:1px solid var(--line);border-radius:10px;padding:14px}.stat b{font-size:25px;display:block}.stat span{color:var(--muted);font-size:12px}
+form .fields{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+label{display:block;font-size:12px;font-weight:600;margin-bottom:4px}input,select,textarea{width:100%;padding:10px;border:1px solid #d5dfd6;border-radius:8px;background:#fff;color:var(--ink);font:inherit}
+textarea{min-height:72px;resize:vertical}.wide{grid-column:1/-1}.check{display:flex;gap:8px;align-items:flex-start}.check input{width:auto;margin-top:3px}
+button{border:1px solid #d5dfd6;border-radius:8px;padding:9px 12px;background:#fff;color:var(--ink);font:inherit;cursor:pointer}
+button.primary{background:var(--green);border-color:var(--green);color:#fff}button:disabled{opacity:.5;cursor:not-allowed}
+.actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.tablewrap{overflow:auto}table{width:100%;border-collapse:collapse;min-width:900px}th,td{text-align:left;padding:10px;border-bottom:1px solid var(--line);vertical-align:top;font-size:12px}th{font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.status{display:inline-block;background:#edf4ed;color:var(--green);border-radius:20px;padding:3px 8px;font-size:10px}.error{background:#fff1ef;color:var(--red);padding:12px;border-radius:9px}.hidden{display:none}.rowactions{display:flex;gap:5px;flex-wrap:wrap}.rowactions button{padding:6px 8px;font-size:11px}
+@media(max-width:800px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}form .fields{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:520px){header{padding:14px}main{margin:14px auto}.panel{padding:14px}.grid,form .fields{grid-template-columns:1fr}.wide{grid-column:auto}}
+</style>
+</head>
+<body>
+<header><div><strong>DNS AGRICULTURE EXCHANGE</strong><br><small>Buyer acquisition · Commercial pipeline · STAGING</small></div><div class="actions"><a href="admin.html" style="color:white">Review console</a><button id="signOut" class="hidden">Sign out</button></div></header>
+<main>
+<div class="notice"><b>Staging workspace.</b> This CRM is connected only to the isolated staging Supabase project. A prospect is not a buyer until a first real order is paid and verified. Do not mark payment as paid before funds are confirmed.</div>
+<section id="authPanel" class="panel"><h1>Admin sign-in</h1><p class="muted">Sign in with the staging administrator account. Google sign-in requires the staging OAuth provider to be configured.</p><form id="loginForm"><div class="fields"><div><label>Email</label><input id="loginEmail" type="email" required autocomplete="username"></div><div><label>Password</label><input id="loginPassword" type="password" required autocomplete="current-password"></div><div class="actions" style="align-items:end"><button class="primary" type="submit">Sign in</button><button id="googleLogin" type="button">Continue with Google</button></div></div></form><p id="authError" class="error hidden"></p></section>
+<section id="crmPanel" class="hidden">
+<div class="panel"><div class="eyebrow">Acquisition performance</div><h1>Buyer pipeline</h1><p class="muted">Track prospects from research to paid trial order, then connect buyer demand to verified farmer supply.</p><div id="stats" class="grid"><div class="stat"><b>—</b><span>Prospects</span></div><div class="stat"><b>—</b><span>Qualified</span></div><div class="stat"><b>—</b><span>Paid trial buyers</span></div><div class="stat"><b>—</b><span>Follow-ups due</span></div></div></div>
+<div class="panel"><h2>Add buyer prospect</h2><form id="prospectForm"><div class="fields">
+<div><label>Business name *</label><input name="business_name" required maxlength="180"></div>
+<div><label>Buyer category</label><select name="buyer_type"><option value="diaspora_retailer">Diaspora retailer</option><option value="importer">Importer</option><option value="distributor">Distributor</option><option value="processor">Processor</option><option value="manufacturer">Manufacturer</option><option value="wholesaler">Wholesaler</option><option value="institutional">Institutional buyer</option><option value="local_commercial">Local commercial buyer</option><option value="other">Other</option></select></div>
+<div><label>Country</label><input name="country" placeholder="United Kingdom"></div>
+<div><label>City</label><input name="city"></div>
+<div><label>Website</label><input name="website" type="url" placeholder="https://"></div>
+<div><label>Source channel</label><select name="source_channel"><option value="google_maps">Google Maps</option><option value="google_search">Google Search</option><option value="linkedin">LinkedIn</option><option value="whatsapp">WhatsApp</option><option value="telegram">Telegram</option><option value="facebook">Facebook</option><option value="instagram">Instagram</option><option value="email">Email</option><option value="trade_platform">Trade platform</option><option value="referral">Referral</option><option value="event">Event</option><option value="website">Website</option><option value="other">Other</option></select></div>
+<div><label>Contact person</label><input name="contact_name"></div>
+<div><label>Role / title</label><input name="contact_role" placeholder="Procurement Manager"></div>
+<div><label>Business email</label><input name="email" type="email"></div>
+<div><label>Phone / WhatsApp</label><input name="phone"></div>
+<div><label>Products of interest</label><input name="product_interests" placeholder="Ginger, sesame, cashew"></div>
+<div><label>Assigned owner</label><select name="assigned_to"><option>Eniola Deborah</option><option>Kehinde</option><option>Adisa</option><option>Unassigned</option></select></div>
+<div><label>Next follow-up</label><input name="next_follow_up_at" type="datetime-local"></div>
+<div class="wide"><label>Source URL</label><input name="source_url" type="url" placeholder="Business website or public listing URL"></div>
+<div class="wide"><label>Notes</label><textarea name="notes" placeholder="What the business buys, evidence of fit, and any buying details."></textarea></div>
+<div class="wide"><label class="check"><input name="contact_allowed" type="checkbox"><span>Permission or a documented lawful basis for business contact has been assessed and recorded.</span></label><input name="contact_basis" placeholder="Record the basis / permission source. Do not contact if this is not established."></div>
+<div class="wide actions"><button class="primary" type="submit">Save prospect</button><span id="formMessage" class="muted"></span></div>
+</div></form></div>
+<div class="panel"><div class="actions" style="justify-content:space-between;margin-bottom:12px"><div><h2 style="margin:0">Buyer prospects</h2><span class="muted">One record per business contact. Follow-up and order history stay attached.</span></div><div class="actions"><input id="search" placeholder="Search business, country, email" style="width:230px"><select id="stageFilter" style="width:190px"><option value="">All stages</option><option value="new">New</option><option value="business_verified">Business verified</option><option value="contact_identified">Contact identified</option><option value="contacted">Contacted</option><option value="responded">Responded</option><option value="qualified">Qualified</option><option value="specifications_received">Specifications received</option><option value="quotation_sent">Quotation sent</option><option value="sample_requested">Sample requested</option><option value="sample_paid">Sample paid</option><option value="sample_sent">Sample sent</option><option value="trial_order_negotiation">Trial order negotiation</option><option value="paid_trial_buyer">Paid trial buyer</option><option value="repeat_buyer">Repeat buyer</option><option value="lost">Lost</option><option value="disqualified">Disqualified</option></select><button id="refresh">Refresh</button></div></div><div class="tablewrap"><table><thead><tr><th>Business / contact</th><th>Market</th><th>Channel</th><th>Owner</th><th>Stage</th><th>Next follow-up</th><th>Actions</th></tr></thead><tbody id="prospectRows"><tr><td colspan="7">Loading…</td></tr></tbody></table></div></div>
+</section>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="./buyer-crm-live.js"></script>
+</body></html>
