@@ -42,6 +42,7 @@ do $$ begin
         and (business_name is null or char_length(business_name) <= 160)
         and (location is null or char_length(location) <= 200)
         and cardinality(produce_categories) <= 30
+        and char_length(array_to_string(produce_categories, ',')) <= 500
       );
   end if;
 end $$;
@@ -72,10 +73,10 @@ grant select, insert, update on table public.exchange_submissions to authenticat
 create table if not exists public.account_deletion_requests (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references auth.users(id) on delete cascade default auth.uid(),
-  reason text,
+  reason text check (reason is null or char_length(reason) <= 1000),
   status text not null default 'pending'
     check (status in ('pending','approved','rejected')),
-  admin_note text,
+  admin_note text check (admin_note is null or char_length(admin_note) <= 1000),
   reviewed_at timestamptz,
   reviewed_by uuid references auth.users(id),
   created_at timestamptz not null default now(),
