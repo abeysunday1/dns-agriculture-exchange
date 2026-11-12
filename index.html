@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-required-role="supplier" style="visibility:hidden">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#102d23"><meta name="description" content="DigitalNewsSpace Agriculture Exchange — a trusted marketplace connecting farmers, suppliers and buyers.">
@@ -90,5 +90,5 @@ function chatQuick(value){document.getElementById('chatInput').value=value;docum
 document.getElementById('wizard').addEventListener('click',e=>{if(e.target.id==='wizard')closeWizard()});
 </script>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="./support-live.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="./support-live.js"></script><script src="./auth-guard.js"></script>
 </body></html>
