@@ -11,7 +11,7 @@
     if(error || !data.session){ window.location.replace(loginUrl.href); return; }
     const {data:profile,error:profileError}=await client.from("exchange_profiles").select("account_type,account_status").eq("user_id",data.session.user.id).maybeSingle();
     if(profileError || !profile){ await client.auth.signOut(); block("Your account profile could not be verified. Contact DNS support."); return; }
-    if(profile.account_status!=="active" && profile.account_status!=="approved"){ block("Your account is awaiting DNS approval or is restricted. Contact DNS support."); return; }
+    if(["suspended","rejected","disabled"].includes(profile.account_status)){ block("This account is restricted. Contact DNS support."); return; }
     if(profile.account_type!==requiredRole){ block("This account does not have permission to open this workspace."); return; }
     document.documentElement.style.visibility="visible";
   }).catch(()=>block("We could not verify your session. Please try again."));
