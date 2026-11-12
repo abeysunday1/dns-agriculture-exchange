@@ -40,6 +40,8 @@
       }).subscribe();
   }
   async function openConversation() {
+    const { data: profile, error: profileError } = await db.schema('public').from('exchange_profiles').select('account_type,account_status').eq('user_id', currentUser.id).maybeSingle();
+    if (profileError || !profile || profile.account_type !== role || ['suspended'].includes(profile.account_status)) throw new Error('Use the correct registered buyer or supplier account to access customer care.');
     const { data, error } = await db.from('conversations').select('id,ticket_ref,status,subject').eq('participant_user_id', currentUser.id).order('last_message_at', {ascending:false}).limit(1);
     if (error) throw error;
     if (data?.length) {
@@ -83,12 +85,7 @@
       const {error}=await db.auth.signInWithPassword({email,password});
       $('dnsChatAuthStatus').textContent=error ? error.message : 'Signed in. Loading your private conversation…';
     });
-    $('dnsChatSignUp').addEventListener('click', async () => {
-      const email=$('dnsChatEmail').value.trim(), password=$('dnsChatPassword').value;
-      if (!email || password.length<6) { $('dnsChatAuthStatus').textContent='Enter a valid email and a password of at least 6 characters.'; return; }
-      const {data,error}=await db.auth.signUp({email,password,options:{emailRedirectTo:location.href.split('#')[0]}});
-      $('dnsChatAuthStatus').textContent=error ? error.message : (data.session ? 'Account created. Loading chat…' : 'Account created. Check your email for the verification link, then return here to sign in.');
-    });
+    $('dnsChatSignUp').addEventListener('click', () => { window.location.href = './login.html?mode=signup&role=' + role; });
   }
   async function boot() {
     if (!$('chatMessages')) return;
