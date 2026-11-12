@@ -43,12 +43,7 @@ Email/password signup continues to pass `account_type` metadata. A first-time Go
 
 ## Admin provisioning
 
-Only the two owner-approved staging identities are listed in `supabase/staging-migrations/20261112090500_provision_staging_admins.sql`:
-
-- `adisaabiodunsunday@gmail.com`
-- `adisaabiodunsunday+testadmin@gmail.com`
-
-The migration is idempotent and only seeds users already present in staging `auth.users`. Create and confirm the two staging Auth accounts first, then apply this migration to staging only. Verify both admin access and buyer/supplier denial. Do not copy these admin rows to production.
+Only one owner-approved staging identity is listed in `supabase/staging-migrations/20261112090500_provision_staging_admins.sql`: `adisaabiodunsunday@gmail.com`. The migration is idempotent and only seeds this account if it already exists in staging `auth.users`. Create and confirm the owner's staging Auth account first, then apply this migration to staging only. Do not copy the admin row to production.
 
 ## Account deletion and session revocation
 
