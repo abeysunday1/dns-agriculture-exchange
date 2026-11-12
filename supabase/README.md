@@ -33,7 +33,7 @@ The UI calls Supabase's built-in Google provider. The provider is **not enabled 
 5. Staging Auth Site URL is `http://127.0.0.1:5500`. Allowed redirects include `http://127.0.0.1:5500/**`, `http://localhost:5500/**`, and the existing GitHub Pages origin.
 6. Keep the Google client secret in Supabase Auth settings only. Never commit it or place it in browser code, screenshots, or chat.
 
-The exact staging client environment values are supplied at runtime, not committed:
+The exact staging client environment values are supplied at runtime, not committed. All browser client files accept an optional `window.DNS_SUPABASE_CONFIG = { url, key }` override; local Playwright must set it with `page.addInitScript` before navigation so no staging test can fall back to production. Without the override, existing production defaults remain unchanged:
 
 - `SUPABASE_URL=https://lvpgasxdmzpsjprohcji.supabase.co`
 - `SUPABASE_PUBLISHABLE_KEY=<staging publishable key>`

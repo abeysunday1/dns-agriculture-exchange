@@ -1,10 +1,10 @@
-# DNS Agriculture Exchange — Operations Runbook
+# DNS Agriculture Exchange â Operations Runbook
 
 ## Current release state
 
 - Active repair branch: `fix/owner-registration-auth`.
 - Production `main`: unchanged; live site has not been deployed or modified.
-- Production Supabase: `zwvtxybqvxtnjrhfcptt` — read-only during this repair.
+- Production Supabase: `zwvtxybqvxtnjrhfcptt` â read-only during this repair.
 - Free staging: `lvpgasxdmzpsjprohcji` (`https://lvpgasxdmzpsjprohcji.supabase.co`), created at **$0/month**.
 - No paid tools, paid branches, upgrades, or Firecrawl credits were used. No PR is open.
 
@@ -33,7 +33,7 @@ Set these in the local test process, not in Git:
 - `SUPABASE_PUBLISHABLE_KEY=<staging publishable key>`
 - `SUPABASE_SERVICE_ROLE_KEY=<server-only secret; never expose to browser>`
 
-The Edge Function reads Supabase's server-side environment. Never paste secret values into code, logs, screenshots, or chat.
+All browser client files accept an optional `window.DNS_SUPABASE_CONFIG = { url, key }` override. In Playwright, set it with `page.addInitScript` before navigation, using only the staging URL and publishable key. Without the override, existing production defaults remain unchanged. The Edge Function reads Supabase's server-side environment. Never paste secret values into code, logs, screenshots, or chat.
 
 ## Google OAuth setup
 
@@ -97,12 +97,12 @@ This execution environment could not resolve the public GitHub Pages hostname, s
 
 Existing project: `Adisa's Project`.
 
-- **DNS Agriculture — Exchange Submission Sync** — enabled. Authenticated webhook trigger; one Supabase upsert into `exchange_automation_events`, keyed by `submission_id`. It records receipt only; it does not send approval/rejection email.
-- **Untitled** — enabled Supabase trigger for the unrelated CRM `activities` table.
-- **DNS Agriculture — Buyer Form Intake** — disabled legacy Tables-based intake flow.
-- **DNS Agriculture — Supplier Form Intake** — disabled legacy Tables-based intake flow.
-- **DNS Agri — Consent-Gated Email Welcome** — disabled Tables-triggered flow.
-- **Adisa Lead Discovery — Firecrawl to CRM (6-hour interim)** — disabled; do not enable or use Firecrawl.
+- **DNS Agriculture â Exchange Submission Sync** â enabled. Authenticated webhook trigger; one Supabase upsert into `exchange_automation_events`, keyed by `submission_id`. It records receipt only; it does not send approval/rejection email.
+- **Untitled** â enabled Supabase trigger for the unrelated CRM `activities` table.
+- **DNS Agriculture â Buyer Form Intake** â disabled legacy Tables-based intake flow.
+- **DNS Agriculture â Supplier Form Intake** â disabled legacy Tables-based intake flow.
+- **DNS Agri â Consent-Gated Email Welcome** â disabled Tables-triggered flow.
+- **Adisa Lead Discovery â Firecrawl to CRM (6-hour interim)** â disabled; do not enable or use Firecrawl.
 
 Do not switch the existing submission-sync flow's production Supabase connection to staging. Approval/rejection notifications require a staging-safe event route and an isolated Gmail test; this is not yet verified. SLA target: first admin review within 24 hours of submission. Calendar integration is optional and not configured.
 
