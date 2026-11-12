@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-required-role="supplier" style="visibility:hidden">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#102d23"><meta name="description" content="DigitalNewsSpace Agriculture Exchange — a trusted marketplace connecting farmers, suppliers and buyers.">
@@ -76,7 +76,7 @@
   <div class="formstep"><h3>4. Evidence and inspection</h3><p>DNS may request evidence before approving a listing.</p><div class="fields"><div class="field full"><label>Evidence available</label><select><option>Farm / stock photos available</option><option>Business documents available</option><option>Both available</option><option>Need guidance</option></select></div><div class="field"><label>Can DNS arrange an inspection?</label><select><option>Yes</option><option>No</option><option>Discuss first</option></select></div><div class="field"><label>Who controls the stock?</label><select><option>I own it</option><option>Authorised representative</option><option>Cooperative / group</option><option>Other</option></select></div></div></div>
   <div class="formstep"><h3>5. Commercial terms</h3><p>These details help DNS assess whether the supply can meet buyer needs.</p><div class="fields"><div class="field"><label>Asking price (₦ per unit)</label><input type="number" min="0" placeholder="Optional"></div><div class="field"><label>Minimum order</label><input type="number" min="1" placeholder="Quantity"></div><div class="field"><label>Delivery arrangement</label><select><option>Buyer pickup</option><option>Supplier delivery</option><option>Discuss per order</option></select></div><div class="field"><label>Delivery location</label><input placeholder="Town / state"></div><div class="field full"><label>Other commercial notes</label><textarea rows="3" placeholder="Add details buyers should know"></textarea></div></div></div>
   <div class="formstep"><h3>6. Review and consent</h3><p>Submitting your details requests a DNS review. It does not mean your identity, business or stock is already verified.</p><div class="notice">DNS protects buyer identity. Suppliers receive anonymous buyer requirements. Only authorised DNS administrators may approve identity disclosure, and only after buyer permission is recorded.</div><label style="font-size:11px;display:flex;gap:9px;align-items:flex-start"><input type="checkbox" required style="margin-top:3px"> I confirm that the information I provide is accurate and I agree that DNS may contact me to review this supplier application.</label></div>
-  <div class="modalactions"><button type="button" class="btn outline" id="prevBtn" onclick="stepChange(-1)" style="visibility:hidden">Back</button><button type="button" class="btn" id="nextBtn" onclick="stepChange(1)">Continue →</button><button type="submit" class="btn hidden" id="submitBtn">Submit demo application</button></div>
+  <div class="modalactions"><button type="button" class="btn outline" id="prevBtn" onclick="stepChange(-1)" style="visibility:hidden">Back</button><button type="button" class="btn" id="nextBtn" onclick="stepChange(1)">Continue →</button><button type="submit" class="btn hidden" id="submitBtn">Submit application</button></div>
  </form>
 </div></div>
 <script>
@@ -85,10 +85,57 @@ document.querySelectorAll('[data-page]').forEach(b=>b.addEventListener('click',(
 let current=0;const steps=[...document.querySelectorAll('.formstep')];function renderStep(){steps.forEach((s,i)=>s.classList.toggle('active',i===current));document.getElementById('progressBar').style.width=((current+1)/steps.length*100)+'%';document.getElementById('prevBtn').style.visibility=current===0?'hidden':'visible';document.getElementById('nextBtn').classList.toggle('hidden',current===steps.length-1);document.getElementById('submitBtn').classList.toggle('hidden',current!==steps.length-1)}
 function openWizard(){current=0;renderStep();document.getElementById('wizard').classList.add('open')}function closeWizard(){document.getElementById('wizard').classList.remove('open')}
 function stepChange(dir){if(dir>0){const inputs=[...steps[current].querySelectorAll('input,select,textarea')];for(const el of inputs){if(!el.checkValidity()){el.reportValidity();return}}}current=Math.max(0,Math.min(steps.length-1,current+dir));renderStep()}
-document.getElementById('supplierForm').addEventListener('submit',e=>{e.preventDefault();alert('Demo only: your details have not been sent or saved. Supabase authentication, secure storage and DNS review must be connected before accepting real applications.');closeWizard()});
+async function submitExchangeForm(form, accountType) {
+  const SUPABASE_URL = "https://zwvtxybqvxtnjrhfcptt.supabase.co";
+  const SUPABASE_KEY = "sb_publishable_-UriFEnpHEPASlRYfIrZgA_6GD6diPF";
+  const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+  const { data: sessionData, error: sessionError } = await client.auth.getSession();
+  if (sessionError || !sessionData.session) {
+    alert("Your session has expired. Please sign in again before submitting.");
+    window.location.href = "./login.html?returnTo=" + encodeURIComponent(window.location.pathname);
+    return;
+  }
+  const { data: profile, error: profileError } = await client.from("exchange_profiles")
+    .select("account_type,account_status").eq("user_id", sessionData.session.user.id).maybeSingle();
+  if (profileError || !profile || profile.account_type !== accountType || !["pending", "active"].includes(profile.account_status)) {
+    alert("Your account is not authorised to submit this application. Contact DNS support.");
+    return;
+  }
+  const payload = {};
+  [...form.querySelectorAll("input:not([type=button]):not([type=submit]), select, textarea")].forEach((el, i) => {
+    const label = el.closest(".field")?.querySelector("label")?.textContent || el.closest("label")?.textContent || "Field " + (i + 1);
+    const key = label.replace(/\*/g, "").trim().toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "") || "field_" + (i + 1);
+    payload[key] = el.type === "checkbox" ? el.checked : el.value.trim();
+  });
+  const submit = form.querySelector('button[type="submit"]');
+  if (submit) { submit.disabled = true; submit.textContent = "Submitting securely…"; }
+  const { data: savedSubmission, error } = await client.from("exchange_submissions").insert({
+    user_id: sessionData.session.user.id,
+    submission_type: accountType,
+    submission_data: payload
+  }).select("id").single();
+  if (error) {
+    if (submit) { submit.disabled = false; submit.textContent = accountType === "supplier" ? "Submit application" : "Submit request"; }
+    console.error("Exchange submission failed", error);
+    alert("We could not save your submission. No application was recorded. Please try again or contact DNS support.");
+    return;
+  }
+  const { error: automationError } = await client.functions.invoke("exchange-submission-sync", { body: { submission_id: savedSubmission.id } });
+  if (submit) { submit.disabled = false; submit.textContent = accountType === "supplier" ? "Submit application" : "Submit request"; }
+  if (automationError) {
+    console.error("Submission saved; Activepieces notification delayed", automationError);
+    alert("Your application was saved securely. DNS has your submission, but the automation notification is delayed. Your application remains in the admin review queue; please do not submit it again.");
+  } else {
+    alert("Your " + accountType + " submission has been securely received and sent to the DNS automation queue for review. It is pending verification; no stock or buyer identity has been approved or shared.");
+  }
+  form.reset();
+  closeWizard();
+}
+
+document.getElementById('supplierForm').addEventListener('submit',async e=>{e.preventDefault();await submitExchangeForm(e.currentTarget,'supplier')});
 function chatQuick(value){document.getElementById('chatInput').value=value;document.getElementById('chatInput').focus()}function sendChatPreview(){const input=document.getElementById('chatInput'),value=input.value.trim();if(!value){input.focus();return}const ref=document.getElementById('chatRef');if(ref.textContent==='Not created yet')ref.textContent='DNS-CC-DEMO-'+Math.random().toString(36).slice(2,8).toUpperCase();const bubble=document.createElement('div');bubble.className='bubble mine';bubble.textContent=value;const time=document.createElement('small');time.textContent='Your message · Preview only';bubble.appendChild(time);document.getElementById('chatMessages').appendChild(bubble);document.getElementById('chatMessages').scrollTop=99999;input.value='';document.getElementById('chatStatus').textContent='Preview only: this message is visible in this browser session and has not been sent to DNS.'}
 document.getElementById('wizard').addEventListener('click',e=>{if(e.target.id==='wizard')closeWizard()});
 </script>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="./support-live.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="./support-live.js"></script><script src="./auth-guard.js"></script>
 </body></html>
