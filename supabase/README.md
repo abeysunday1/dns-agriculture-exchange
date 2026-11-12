@@ -2,28 +2,64 @@
 
 ## Environments
 
-- Production project: `zwvtxybqvxtnjrhfcptt` (existing project). Do not use it for test accounts, destructive tests, or admin provisioning.
-- Staging: not yet created. A Supabase development branch is billed hourly; obtain owner approval for the quoted rate before creating it. A new branch starts without production data.
-- Apply and verify migrations in staging before any production change. Do not merge a Supabase branch into production as part of this repair.
+- Production: `zwvtxybqvxtnjrhfcptt`. Read-only during this repair. Do not apply migrations, create test users, provision admins, or deploy Edge Functions here.
+- Staging: `lvpgasxdmzpsjprohcji`, `https://lvpgasxdmzpsjprohcji.supabase.co`. Created on the free tier at **$0/month**. All test schema and Edge Function work is isolated here.
+- No paid Supabase development branch was created. The local Docker path was unavailable in the execution environment.
 
-## Migrations
+## Migration inventory and staging baseline
 
-Migrations are ordered SQL files under `supabase/migrations/`. They must be safe to re-run (`IF NOT EXISTS`, guarded policy/trigger replacement, and conflict-safe seeds). The profile/deletion migration is currently prepared for staging review only and has not been applied to production.
+The repair branch originally contained only `20261112080000_profile_and_account_deletion.sql`. Production's migration ledger contained nine historical entries; the CRM-only privilege migration and the migration containing the production webhook secret were not copied into staging. The exchange/support schema was reconstructed without production data or secrets in:
 
-## Provisioning administrators
+- `20261112070000_dns_exchange_staging_baseline.sql`
+- `20261112080000_profile_and_account_deletion.sql`
+- `20261112090000_google_oauth_profile_bootstrap.sql`
+- `20261112091000_auth_session_revocation.sql`
+- `20261112092000_harden_security_definer_rpc.sql`
 
-Admin access is granted only to a verified, explicitly approved account through a reviewed SQL migration in **staging**. Never expose an admin toggle in the browser, user-editable metadata, or public signup form. The role table is `dns_support.support_agents`; the admin console checks `private.is_active_support_admin()` through the `public.is_exchange_admin()` RPC.
+The staging-only admin seed is separate: `supabase/staging-migrations/20261112090500_provision_staging_admins.sql`. Apply it only after the two staging Auth users exist. Never apply it to production.
 
-Before provisioning:
+Buyer sourcing requirements remain in `public.exchange_submissions` with `submission_type='buyer'`; do not create a parallel sourcing table.
 
-1. Obtain explicit owner approval for the named owner account and the separate test-admin email.
-2. Confirm both accounts exist in staging `auth.users` and their email addresses are verified.
-3. Add an idempotent migration that inserts `user_id`, `role='admin'`, `active=true`, and a display name into `dns_support.support_agents`, using `ON CONFLICT (user_id) DO UPDATE` only after confirming the intended role changes.
-4. Apply that migration to staging only; verify both admins can access the review queue and a buyer/supplier cannot.
-5. Do not copy staging admin rows to production automatically. Production provisioning requires a separate owner decision and change review.
+## Google OAuth (staging first)
+
+The UI calls Supabase's built-in Google provider. The provider is **not enabled yet** because no Google OAuth client ID/secret is configured.
+
+1. In Google Cloud Console, create an OAuth client of type **Web application** (no paid Google service is required for this OAuth client).
+2. Add this exact Authorized redirect URI:
+   `https://lvpgasxdmzpsjprohcji.supabase.co/auth/v1/callback`
+3. Add local development origins:
+   `http://127.0.0.1:5500` and `http://localhost:5500`.
+4. In Supabase staging > Authentication > Providers > Google, enter the client ID and client secret and enable Google.
+5. Staging Auth Site URL is `http://127.0.0.1:5500`. Allowed redirects include `http://127.0.0.1:5500/**`, `http://localhost:5500/**`, and the existing GitHub Pages origin.
+6. Keep the Google client secret in Supabase Auth settings only. Never commit it or place it in browser code, screenshots, or chat.
+
+The exact staging client environment values are supplied at runtime, not committed:
+
+- `SUPABASE_URL=https://lvpgasxdmzpsjprohcji.supabase.co`
+- `SUPABASE_PUBLISHABLE_KEY=<staging publishable key>`
+- `SUPABASE_SERVICE_ROLE_KEY=<server-side secret only; Edge Functions>`
+
+Email/password signup continues to pass `account_type` metadata. A first-time Google user selects buyer or supplier after OAuth; `ensure_exchange_profile_from_metadata()` creates the profile once. Returning Google users route from the saved profile.
+
+## Admin provisioning
+
+Only the two owner-approved staging identities are listed in `supabase/staging-migrations/20261112090500_provision_staging_admins.sql`:
+
+- `adisaabiodunsunday@gmail.com`
+- `adisaabiodunsunday+testadmin@gmail.com`
+
+The migration is idempotent and only seeds users already present in staging `auth.users`. Create and confirm the two staging Auth accounts first, then apply this migration to staging only. Verify both admin access and buyer/supplier denial. Do not copy these admin rows to production.
+
+## Account deletion and session revocation
+
+Admin approval first soft-deletes the exchange profile. The browser then invokes the JWT-protected `revoke-deleted-account` Edge Function. It verifies the caller with `is_exchange_admin()`, verifies the request is approved, and calls `auth.admin.deleteUser(user_id)` using `SUPABASE_SERVICE_ROLE_KEY` from the server environment.
+
+Supabase's admin sign-out endpoint requires the target user's JWT, not a user ID. Deleting the Auth user removes its sessions and refresh tokens; the staging RLS policies additionally check the current `auth.sessions` row so already-issued access JWTs cannot access protected exchange data while they remain unexpired. The deletion request retains an audit row with a null user reference.
 
 ## Security boundaries
 
-- Browser code may contain only the Supabase publishable key. Never put a service-role key, SMTP credential, or private API token in client files, Git history, screenshots, or logs.
-- Account deletion is a request and approval process. It soft-deletes the exchange profile; it does not immediately erase the Auth identity or guarantee erasure of legally retained records.
-- Buyer sourcing requests are stored as `exchange_submissions` with `submission_type='buyer'`; there is no separate `sourcing_requirements` table in the current schema.
+- Browser code may contain only the publishable key. Never put a service-role/secret key, SMTP credential, or private API token in client files.
+- Do not trust user-editable metadata for admin authorization. Admin role lives in `dns_support.support_agents`.
+- The public admin RPC is invoker-only; privileged checks live in the unexposed `private` schema.
+- The production Security Advisor previously reported leaked-password protection disabled. The free tier rejects enabling HaveIBeenPwned protection (HTTP 402; Pro-only). Do not upgrade or pay; this remains a documented release blocker.
+- Staging RLS Security Advisor is clean after the corrective RPC migration. This is not a substitute for anon-key and cross-user runtime tests.
