@@ -109,18 +109,25 @@ async function submitExchangeForm(form, accountType) {
   });
   const submit = form.querySelector('button[type="submit"]');
   if (submit) { submit.disabled = true; submit.textContent = "Submitting securely…"; }
-  const { error } = await client.from("exchange_submissions").insert({
+  const { data: savedSubmission, error } = await client.from("exchange_submissions").insert({
     user_id: sessionData.session.user.id,
     submission_type: accountType,
     submission_data: payload
-  });
-  if (submit) { submit.disabled = false; submit.textContent = accountType === "supplier" ? "Submit application" : "Submit request"; }
+  }).select("id").single();
   if (error) {
+    if (submit) { submit.disabled = false; submit.textContent = accountType === "supplier" ? "Submit application" : "Submit request"; }
     console.error("Exchange submission failed", error);
     alert("We could not save your submission. No application was recorded. Please try again or contact DNS support.");
     return;
   }
-  alert("Your " + accountType + " submission has been securely received for DNS review. It is pending verification; no stock or buyer identity has been approved or shared.");
+  const { error: automationError } = await client.functions.invoke("exchange-submission-sync", { body: { submission_id: savedSubmission.id } });
+  if (submit) { submit.disabled = false; submit.textContent = accountType === "supplier" ? "Submit application" : "Submit request"; }
+  if (automationError) {
+    console.error("Submission saved; Activepieces notification delayed", automationError);
+    alert("Your application was saved securely. DNS has your submission, but the automation notification is delayed. Your application remains in the admin review queue; please do not submit it again.");
+  } else {
+    alert("Your " + accountType + " submission has been securely received and sent to the DNS automation queue for review. It is pending verification; no stock or buyer identity has been approved or shared.");
+  }
   form.reset();
   closeWizard();
 }
