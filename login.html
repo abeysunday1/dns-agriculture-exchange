@@ -22,7 +22,7 @@ label{display:block;font-size:12px;font-weight:700;color:#46564d;margin:13px 0 6
 </head>
 <body>
 <main>
-  <div class="brand">DIGITALNEWSSPACE ÃÂ· AGRICULTURE EXCHANGE</div>
+  <div class="brand">DIGITALNEWSSPACE ÃÂÃÂ· AGRICULTURE EXCHANGE</div>
   <h1 id="heading">Welcome back</h1>
   <p class="sub" id="intro">Sign in to your buyer or supplier account.</p>
   <div class="roles" aria-label="Account type">
@@ -37,6 +37,7 @@ label{display:block;font-size:12px;font-weight:700;color:#46564d;margin:13px 0 6
   <div class="or">OR CONTINUE WITH EMAIL</div>
   <form id="authForm">
     <div id="nameWrap" class="hidden"><label for="fullName">Full name</label><input id="fullName" autocomplete="name" placeholder="Your full name"></div>
+    <div id="confirmWrap" class="hidden"><label for="confirmPassword" id="confirmLabel">Confirm password</label><input id="confirmPassword" type="password" autocomplete="new-password" placeholder="Enter the same password" minlength="8"></div>
     <label for="email">Gmail or email address</label>
     <input id="email" type="email" autocomplete="email" placeholder="you@gmail.com" required>
     <label for="password">Password</label>
@@ -46,15 +47,15 @@ label{display:block;font-size:12px;font-weight:700;color:#46564d;margin:13px 0 6
   </form>
   <button class="primary hidden" id="googleFinish" type="button">Continue with selected account type</button>
   <div class="message" id="message" role="status"></div>
-  <p class="note">Your contact details remain private. DNS controls buyerÃ¢ÂÂsupplier introductions.</p>
+  <p class="note">Your contact details remain private. DNS controls buyerÃÂ¢ÃÂÃÂsupplier introductions.</p>
   <div class="footer">By continuing, you agree to the DNS Agriculture Exchange terms and privacy policy.</div>
 </main>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 /* Add the DNS Supabase project URL and public anon key here after backend setup.
    Never place a Supabase service-role key in this file. */
-const SUPABASE_URL = window.DNS_SUPABASE_CONFIG?.url || "https://zwvtxybqvxtnjrhfcptt.supabase.co";
-const SUPABASE_ANON_KEY = window.DNS_SUPABASE_CONFIG?.key || "sb_publishable_-UriFEnpHEPASlRYfIrZgA_6GD6diPF";
+const SUPABASE_URL = "https://lvpgasxdmzpsjprohcji.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_m_HEhwzD-_lGBV_TDTht0Q_fqWjpfcv";
 const configured = SUPABASE_URL.startsWith("https://") && !SUPABASE_URL.includes("YOUR_") && !SUPABASE_ANON_KEY.includes("YOUR_");
 const client = configured && window.supabase ? window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY) : null;
 let role = "buyer", mode = "signin", recoveryMode = new URLSearchParams(location.search).get("recovery")==="1", googleSetupSession=null;
@@ -92,7 +93,7 @@ async function finishGoogleSetup(){
  if(profileError||!profile){say("Your profile could not be completed. Please contact DNS support.",true);return;}
  window.location.href=profile.account_type==="supplier"?"index.html":"buyer.html";
 }
-function setMode(next){mode=next;document.querySelectorAll("[data-mode]").forEach(b=>b.classList.toggle("active",b.dataset.mode===mode));$("nameWrap").classList.toggle("hidden",mode!=="signup");$("fullName").required=mode==="signup";$("forgot").classList.toggle("hidden",mode!=="signin");$("heading").textContent=mode==="signin"?"Welcome back":"Create your account";$("intro").textContent=mode==="signin"?"Sign in to your buyer or supplier account.":"Register securely to access the exchange."; $("submit").textContent=mode==="signin"?"Log in":"Create account";$("password").autocomplete=mode==="signin"?"current-password":"new-password";$("message").style.display="none"}
+function setMode(next){mode=next;document.querySelectorAll("[data-mode]").forEach(b=>b.classList.toggle("active",b.dataset.mode===mode));$("nameWrap").classList.toggle("hidden",mode!=="signup");$("fullName").required=mode==="signup";$("confirmWrap").classList.toggle("hidden",mode!=="signup"&&!recoveryMode);$("confirmPassword").required=mode==="signup"||recoveryMode;$("confirmLabel").textContent=recoveryMode?"Confirm new password":"Confirm password";$("forgot").classList.toggle("hidden",mode!=="signin"||recoveryMode);$("heading").textContent=recoveryMode?"Choose a new password":(mode==="signin"?"Welcome back":"Create your account");$("intro").textContent=recoveryMode?"Enter your new password twice.":(mode==="signin"?"Sign in to your buyer or supplier account.":"Register securely to access the exchange."); $("submit").textContent=recoveryMode?"Update password":(mode==="signin"?"Log in":"Create account");$("password").autocomplete=mode==="signin"?"current-password":"new-password";$("message").style.display="none"}
 document.querySelectorAll("[data-mode]").forEach(b=>b.addEventListener("click",()=>setMode(b.dataset.mode)));
 document.querySelectorAll("[data-role]").forEach(b=>b.addEventListener("click",()=>{role=b.dataset.role;document.querySelectorAll("[data-role]").forEach(x=>x.classList.toggle("active",x===b));if(googleSetupSession){$("googleFinish").classList.remove("hidden");say("Continue as "+(role==="buyer"?"Buyer":"Farmer / Supplier")+" to finish your Google account.");}else{$("intro").textContent=(mode==="signin"?"Sign in to your ":"Create your ")+(role==="buyer"?"buyer":"supplier")+" account."}}));
 if(recoveryMode){setMode("signin");$("heading").textContent="Choose a new password";$("intro").textContent="Enter and save your new password.";$("password").autocomplete="new-password";$("submit").textContent="Update password";$("forgot").classList.add("hidden")}
