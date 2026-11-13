@@ -1,7 +1,7 @@
 /* DNS Agriculture private customer-care chat. Uses only the public publishable key. */
 (() => {
-  const SUPABASE_URL = 'https://zwvtxybqvxtnjrhfcptt.supabase.co';
-  const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_-UriFEnpHEPASlRYfIrZgA_6GD6diPF';
+  const SUPABASE_URL = 'https://lvpgasxdmzpsjprohcji.supabase.co';
+  const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_m_HEhwzD-_lGBV_TDTht0Q_fqWjpfcv';
   const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
     db: { schema: 'dns_support' },
     auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
