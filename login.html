@@ -92,28 +92,6 @@ async function finishSignIn(user){
 client?.auth.onAuthStateChange((event,session)=>{
  if((event==="SIGNED_IN"||event==="INITIAL_SESSION")&&session?.user){window.setTimeout(()=>finishSignIn(session.user),0)}
 });
-let finishingSignIn=false;
-async function finishSignIn(user){
- if(!client||!user||finishingSignIn)return;
- finishingSignIn=true;
- try{
-  const {data:profile,error:profileError}=await client.from("exchange_profiles").select("account_type").eq("user_id",user.id).maybeSingle();
-  if(profileError)throw profileError;
-  const savedRole=sessionStorage.getItem("dns_exchange_account_type");
-  const accountType=profile?.account_type||user.user_metadata?.account_type||savedRole;
-  if(!["buyer","supplier"].includes(accountType)){say("Choose Buyer or Farmer / Supplier to complete your account.",true);return}
-  if(user.user_metadata?.account_type!==accountType){const {error}=await client.auth.updateUser({data:{account_type:accountType}});if(error)throw error}
-  const {error:bootstrapError}=await client.rpc("ensure_exchange_profile_from_metadata");
-  if(bootstrapError)throw bootstrapError;
-  sessionStorage.removeItem("dns_exchange_account_type");
-  say("Account ready. Opening your portal…");
-  window.location.href=accountType==="buyer"?"buyer.html":"index.html";
- }catch(err){say(err.message||"Your account could not be prepared. Please try again.",true)}
- finally{finishingSignIn=false}
-}
-client?.auth.onAuthStateChange((event,session)=>{
- if((event==="SIGNED_IN"||event==="INITIAL_SESSION")&&session?.user){window.setTimeout(()=>finishSignIn(session.user),0)}
-});
 </script>
 </body>
 </html>
