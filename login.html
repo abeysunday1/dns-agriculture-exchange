@@ -27,7 +27,7 @@ label{display:block;font-size:12px;font-weight:700;color:#46564d;margin:13px 0 6
   <p class="sub" id="intro">Sign in to your buyer or supplier account.</p>
   <div class="roles" aria-label="Account type">
     <button class="role active" type="button" data-role="buyer">Buyer</button>
-    <button class="role" type="button" data-role="farmer">Farmer / Supplier</button>
+    <button class="role" type="button" data-role="supplier">Farmer / Supplier</button>
   </div>
   <div class="tabs">
     <button class="tab active" type="button" data-mode="signin">Log in</button>
@@ -48,7 +48,9 @@ label{display:block;font-size:12px;font-weight:700;color:#46564d;margin:13px 0 6
   <p class="note">Your contact details remain private. DNS controls buyer–supplier introductions.</p>
   <div class="footer">By continuing, you agree to the DNS Agriculture Exchange terms and privacy policy.</div>
 </main>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2">
+
+</script>
 <script>
 /* Add the DNS Supabase project URL and public anon key here after backend setup.
    Never place a Supabase service-role key in this file. */
@@ -64,9 +66,54 @@ document.querySelectorAll("[data-mode]").forEach(b=>b.addEventListener("click",(
 document.querySelectorAll("[data-role]").forEach(b=>b.addEventListener("click",()=>{role=b.dataset.role;document.querySelectorAll("[data-role]").forEach(x=>x.classList.toggle("active",x===b));$("intro").textContent=(mode==="signin"?"Sign in to your ":"Create your ")+(role==="buyer"?"buyer":"farmer / supplier")+" account."}));
 $("authForm").addEventListener("submit",async e=>{e.preventDefault();if(!client){say("Preview only: connect this page to your Supabase project to activate secure email sign-up and login.",true);return}
 const email=$("email").value.trim(),password=$("password").value,button=$("submit");button.disabled=true;
-try{let result;if(mode==="signup"){result=await client.auth.signUp({email,password,options:{data:{full_name:$("fullName").value.trim(),account_role:role}}});if(!result.error)say("Account request received. Check your email to confirm your address.")}else{result=await client.auth.signInWithPassword({email,password});if(!result.error)say("Signed in. Your secure session is active.")}if(result.error)say(result.error.message,true)}catch(err){say("Unable to complete sign-in. Please try again.",true)}finally{button.disabled=false}});
-$("google").addEventListener("click",async()=>{if(!client){say("Google sign-in is not available in this preview yet. DNS will enable it after secure Google authentication is configured.",true);return}const {error}=await client.auth.signInWithOAuth({provider:"google",options:{redirectTo:window.location.origin+window.location.pathname,queryParams:{prompt:"select_account"}}});if(error)say(error.message,true)});
+try{let result;if(mode==="signup"){result=await client.auth.signUp({email,password,options:{emailRedirectTo:window.location.origin+window.location.pathname,data:{full_name:$("fullName").value.trim(),account_type:role}}});if(!result.error)say("Account request received. Check your email to confirm your address.")}else{result=await client.auth.signInWithPassword({email,password});if(!result.error)say("Signed in. Preparing your secure account…")}if(result.error)say(result.error.message,true)}catch(err){say("Unable to complete sign-in. Please try again.",true)}finally{button.disabled=false}});
+$("google").addEventListener("click",async()=>{if(!client){say("Google sign-in is not available in this preview yet. DNS will enable it after secure Google authentication is configured.",true);return}sessionStorage.setItem("dns_exchange_account_type",role);const {error}=await client.auth.signInWithOAuth({provider:"google",options:{redirectTo:window.location.origin+window.location.pathname,queryParams:{prompt:"select_account"}}});if(error){sessionStorage.removeItem("dns_exchange_account_type");say(error.message,true)}});
 $("forgot").addEventListener("click",async e=>{e.preventDefault();const email=$("email").value.trim();if(!email)return say("Enter your email address first.",true);if(!client)return say("Preview only: connect Supabase Auth to enable password recovery.",true);const {error}=await client.auth.resetPasswordForEmail(email,{redirectTo:window.location.origin+window.location.pathname});say(error?error.message:"If this email is registered, a password reset link will be sent.",!!error)});
+
+let finishingSignIn=false;
+async function finishSignIn(user){
+ if(!client||!user||finishingSignIn)return;
+ finishingSignIn=true;
+ try{
+  const {data:profile,error:profileError}=await client.from("exchange_profiles").select("account_type").eq("user_id",user.id).maybeSingle();
+  if(profileError)throw profileError;
+  const savedRole=sessionStorage.getItem("dns_exchange_account_type");
+  const accountType=profile?.account_type||user.user_metadata?.account_type||savedRole;
+  if(!["buyer","supplier"].includes(accountType)){say("Choose Buyer or Farmer / Supplier to complete your account.",true);return}
+  if(user.user_metadata?.account_type!==accountType){const {error}=await client.auth.updateUser({data:{account_type:accountType}});if(error)throw error}
+  const {error:bootstrapError}=await client.rpc("ensure_exchange_profile_from_metadata");
+  if(bootstrapError)throw bootstrapError;
+  sessionStorage.removeItem("dns_exchange_account_type");
+  say("Account ready. Opening your portal…");
+  window.location.href=accountType==="buyer"?"buyer.html":"index.html";
+ }catch(err){say(err.message||"Your account could not be prepared. Please try again.",true)}
+ finally{finishingSignIn=false}
+}
+client?.auth.onAuthStateChange((event,session)=>{
+ if((event==="SIGNED_IN"||event==="INITIAL_SESSION")&&session?.user){window.setTimeout(()=>finishSignIn(session.user),0)}
+});
+let finishingSignIn=false;
+async function finishSignIn(user){
+ if(!client||!user||finishingSignIn)return;
+ finishingSignIn=true;
+ try{
+  const {data:profile,error:profileError}=await client.from("exchange_profiles").select("account_type").eq("user_id",user.id).maybeSingle();
+  if(profileError)throw profileError;
+  const savedRole=sessionStorage.getItem("dns_exchange_account_type");
+  const accountType=profile?.account_type||user.user_metadata?.account_type||savedRole;
+  if(!["buyer","supplier"].includes(accountType)){say("Choose Buyer or Farmer / Supplier to complete your account.",true);return}
+  if(user.user_metadata?.account_type!==accountType){const {error}=await client.auth.updateUser({data:{account_type:accountType}});if(error)throw error}
+  const {error:bootstrapError}=await client.rpc("ensure_exchange_profile_from_metadata");
+  if(bootstrapError)throw bootstrapError;
+  sessionStorage.removeItem("dns_exchange_account_type");
+  say("Account ready. Opening your portal…");
+  window.location.href=accountType==="buyer"?"buyer.html":"index.html";
+ }catch(err){say(err.message||"Your account could not be prepared. Please try again.",true)}
+ finally{finishingSignIn=false}
+}
+client?.auth.onAuthStateChange((event,session)=>{
+ if((event==="SIGNED_IN"||event==="INITIAL_SESSION")&&session?.user){window.setTimeout(()=>finishSignIn(session.user),0)}
+});
 </script>
 </body>
 </html>
